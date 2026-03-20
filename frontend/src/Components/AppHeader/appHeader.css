@@ -1,0 +1,141 @@
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding: 14px 24px;
+    background: rgba(12, 18, 32, 0.62);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+    backdrop-filter: blur(12px);
+}
+
+.app-header-inner {
+    max-width: 1160px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.app-brand {
+    display: grid;
+    gap: 4px;
+}
+
+.app-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(70, 120, 255, 0.18);
+    border: 1px solid rgba(70, 120, 255, 0.25);
+    color: #dbe7ff;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+    width: fit-content;
+}
+
+.app-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 800;
+    color: rgba(233, 238, 248, 0.92);
+}
+
+.app-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.app-btn {
+    height: 38px;
+    padding: 0 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(12, 18, 32, 0.30);
+    color: rgba(233, 238, 248, 0.90);
+    transition: transform 0.06s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.app-btn:hover {
+    background: rgba(12, 18, 32, 0.45);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+.app-btn:active {
+    transform: translateY(1px);
+}
+
+.app-btn.primary {
+    border-color: rgba(70, 120, 255, 0.55);
+    background: rgba(70, 120, 255, 0.22);
+}
+
+.app-btn.primary:hover {
+    background: rgba(70, 120, 255, 0.28);
+    border-color: rgba(70, 120, 255, 0.70);
+}
+
+.app-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* убираем лейбл совсем */
+.app-filter-label {
+    display: none;
+}
+
+/* маленькая подпись рядом с селектом, если нужна */
+.app-filter-inline {
+    font-size: 12px;
+    color: rgba(233, 238, 248, 0.70);
+    font-weight: 700;
+}
+
+.app-select {
+    height: 38px;
+    border-radius: 12px;
+    padding: 0 12px;
+    outline: none;
+    background: rgba(7, 12, 22, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #e9eef8;
+}
+
+.app-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 8px;
+    margin-left: 6px;
+    border-left: 1px solid rgba(255,255,255,0.10);
+}
+
+.app-user-pill {
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(7, 12, 22, 0.45);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    color: rgba(233, 238, 248, 0.88);
+}
+
+.app-user-pill span {
+    font-weight: 700;
+    color: rgba(233, 238, 248, 0.60);
+    font-size: 11px;
+}

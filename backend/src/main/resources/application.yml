@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: 123
+  jpa:
+    hibernate:
+      ddl-auto: update
+app:
+  jwt:
+    secret: "1CtBXHcnULyXMLdQE4W4g0r1DIpoFvrgsLPo3Kaou7JSSYT5scpBSdTP41rJaIDwzMnF2P2Ja67dwYMKz5UR45gAL36JHhtAvPSB0ZgtTsDidR7EyKcnOLGNY5RxxejPi22Wanz0UfEHQnVseD5V8uao3e0aAuoEBO8oIosSNJeCxL1neyHagsq34RlfSlIHbn2IYLcymmzOwX7Mc4Mmu2COBUujS1Znvx8Autqd1pn5qZJQ72QzophEegnVCcce"
+    issuer: "labquality"
+    accessTtlMinutes: 120
