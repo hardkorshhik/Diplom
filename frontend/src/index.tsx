@@ -4,6 +4,9 @@ import './index.css';
 import App from './App';
 import {BrowserRouter} from "react-router-dom";
 
+const savedTheme = localStorage.getItem("app-theme");
+document.documentElement.dataset.theme = savedTheme === "light" ? "light" : "dark";
+
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );

@@ -2,6 +2,7 @@ package ru.diplom.labquality.config
 
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
+import org.springframework.core.annotation.Order
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -16,6 +17,7 @@ import ru.diplom.labquality.repo.ProductRepo
 import ru.diplom.labquality.repo.UserRepo
 
 @Component
+@Order(100)
 class DemoDataInitializer(
     private val userRepo: UserRepo,
     private val productRepo: ProductRepo,
@@ -32,18 +34,25 @@ class DemoDataInitializer(
     }
 
     private fun seedUsers() {
-        createUserIfMissing("admin@ammophos.ru", "admin123", Role.ADMIN)
-        createUserIfMissing("qa@ammophos.ru", "qa123", Role.LAB)
-        createUserIfMissing("lab1@ammophos.ru", "lab123", Role.LAB)
-        createUserIfMissing("lab2@ammophos.ru", "lab123", Role.LAB)
+        createUserIfMissing("Системный администратор", "admin@example.com", "admin123", Role.ADMIN)
+        createUserIfMissing("Инженер по качеству (ОТК)", "qa@example.com", "qa123", Role.QA)
+        createUserIfMissing("Лаборант смены №1", "lab1@example.com", "lab123", Role.LAB)
+        createUserIfMissing("Лаборант смены №2", "lab2@example.com", "lab123", Role.LAB)
     }
 
-    private fun createUserIfMissing(email: String, password: String, role: Role) {
+    private fun createUserIfMissing(fullName: String, email: String, password: String, role: Role) {
         val normalized = email.trim().lowercase()
-        if (userRepo.findByEmail(normalized) != null) return
+        val existing = userRepo.findByEmail(normalized)
+        if (existing != null) {
+            existing.fullName = fullName.trim()
+            existing.role = role
+            userRepo.save(existing)
+            return
+        }
 
         userRepo.save(
             UserEntity(
+                fullName = fullName.trim(),
                 email = normalized,
                 passwordHash = passwordEncoder.encode(password) ?: error("Password encoding failed"),
                 role = role
@@ -53,14 +62,15 @@ class DemoDataInitializer(
 
     private fun seedProductsAndMetrics() {
         product("Ammophos NP 12:52", "AMMO-NP-1252")
-        product("Carbamide", "CARBAMIDE")
-        product("Ammonium Nitrate", "NITRATE")
+        product("NPK 16:16:16", "NPK-161616")
+        product("Diammonium phosphate 18:46", "DAP-1846")
 
-        metric("Влажность", "%")
-        metric("pH", "ед.")
-        metric("Плотность", "г/см³")
-        metric("Массовая доля", "%")
-        metric("Содержание N", "%")
+        metric("Nitrogen (N)", "%")
+        metric("Phosphates (P2O5)", "%")
+        metric("Potassium (K2O)", "%")
+        metric("Sulfur (S)", "%")
+        metric("Moisture", "%")
+        metric("Granule strength", "N/granule")
     }
 
     private fun product(name: String, code: String): ProductEntity {
@@ -77,26 +87,29 @@ class DemoDataInitializer(
 
     private fun seedNorms() {
         val ammo = productRepo.findByCodeIgnoreCase("AMMO-NP-1252") ?: return
-        val carbamide = productRepo.findByCodeIgnoreCase("CARBAMIDE") ?: return
-        val nitrate = productRepo.findByCodeIgnoreCase("NITRATE") ?: return
+        val npk = productRepo.findByCodeIgnoreCase("NPK-161616") ?: return
+        val dap = productRepo.findByCodeIgnoreCase("DAP-1846") ?: return
 
-        upsertNorm(ammo, "Влажность", 0.0, 1.2)
-        upsertNorm(ammo, "pH", 5.5, 7.5)
-        upsertNorm(ammo, "Плотность", 1.0, 1.3)
-        upsertNorm(ammo, "Массовая доля", 11.0, 13.5)
-        upsertNorm(ammo, "Содержание N", 11.0, 13.0)
+        upsertNorm(ammo, "Nitrogen (N)", 11.5, 12.5)
+        upsertNorm(ammo, "Phosphates (P2O5)", 51.0, 53.0)
+        upsertNorm(ammo, "Potassium (K2O)", 0.0, 0.3)
+        upsertNorm(ammo, "Sulfur (S)", 0.0, 1.0)
+        upsertNorm(ammo, "Moisture", 0.0, 1.2)
+        upsertNorm(ammo, "Granule strength", 30.0, 60.0)
 
-        upsertNorm(carbamide, "Влажность", 0.0, 0.5)
-        upsertNorm(carbamide, "pH", 6.0, 7.8)
-        upsertNorm(carbamide, "Плотность", 1.1, 1.4)
-        upsertNorm(carbamide, "Массовая доля", 45.0, 47.0)
-        upsertNorm(carbamide, "Содержание N", 45.0, 47.0)
+        upsertNorm(npk, "Nitrogen (N)", 15.5, 16.5)
+        upsertNorm(npk, "Phosphates (P2O5)", 15.5, 16.5)
+        upsertNorm(npk, "Potassium (K2O)", 15.5, 16.5)
+        upsertNorm(npk, "Sulfur (S)", 0.0, 1.0)
+        upsertNorm(npk, "Moisture", 0.0, 0.8)
+        upsertNorm(npk, "Granule strength", 40.0, 70.0)
 
-        upsertNorm(nitrate, "Влажность", 0.0, 0.4)
-        upsertNorm(nitrate, "pH", 5.0, 7.0)
-        upsertNorm(nitrate, "Плотность", 1.1, 1.6)
-        upsertNorm(nitrate, "Массовая доля", 33.0, 35.5)
-        upsertNorm(nitrate, "Содержание N", 33.0, 35.5)
+        upsertNorm(dap, "Nitrogen (N)", 17.5, 18.5)
+        upsertNorm(dap, "Phosphates (P2O5)", 45.0, 47.0)
+        upsertNorm(dap, "Potassium (K2O)", 0.0, 0.2)
+        upsertNorm(dap, "Sulfur (S)", 0.0, 1.0)
+        upsertNorm(dap, "Moisture", 0.0, 1.5)
+        upsertNorm(dap, "Granule strength", 35.0, 65.0)
     }
 
     private fun upsertNorm(product: ProductEntity, metricName: String, min: Double?, max: Double?) {

@@ -10,6 +10,7 @@ import { getTokenFromCookies } from "./Cookie";
 import RoleRoute from "./Route/RoleRoute";
 import { StaffPage } from "./Pages/StaffPage";
 import { BatchDetailsPage } from "./Pages/BatchDetailsPage/BatchDetailsPage";
+import "./theme.css";
 
 function App() {
     const isAuthenticated = Boolean(getTokenFromCookies());

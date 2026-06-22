@@ -55,6 +55,13 @@ class BatchService(
         measurementRepo.findAllByBatchIdOrderByMeasuredAtDesc(batchId)
 
     @Transactional
+    fun delete(batchId: Long) {
+        batchRepo.findById(batchId).orElseThrow()
+        measurementRepo.deleteAllByBatchId(batchId)
+        batchRepo.deleteById(batchId)
+    }
+
+    @Transactional
     fun addMeasurement(
         batchId: Long,
         metricId: Long,

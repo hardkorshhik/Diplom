@@ -2,3 +2,6 @@ run-logs/
 *.log
 .idea/
 *.iml
+tmp_*.txt
+.tmp_*/
+*.pid

@@ -75,8 +75,12 @@ export const NewBatchPage: React.FC = () => {
                     </div>
 
                     <div className="actions">
-                        <button className="btn" onClick={() => navigate("/batches")}>Назад</button>
-                        <button className="btn primary" onClick={() => navigate("/dashboard")}>Dashboard</button>
+                        <button className="btn" onClick={() => navigate("/batches")}>
+                            Назад
+                        </button>
+                        <button className="btn primary" onClick={() => navigate("/dashboard")}>
+                            Dashboard
+                        </button>
                     </div>
                 </header>
 
@@ -97,7 +101,9 @@ export const NewBatchPage: React.FC = () => {
                                 disabled={loadingProducts || !hasProducts}
                             >
                                 {products.map((p) => (
-                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                    <option key={p.id} value={p.id}>
+                                        {p.name}
+                                    </option>
                                 ))}
                             </select>
                         </label>
@@ -108,7 +114,7 @@ export const NewBatchPage: React.FC = () => {
                                 className="input"
                                 value={batchNumber}
                                 onChange={(e) => setBatchNumber(e.target.value)}
-                                placeholder="например B-2026-02-08-01"
+                                placeholder="Например B-2026-02-08-01"
                                 required
                             />
                         </label>
@@ -119,7 +125,7 @@ export const NewBatchPage: React.FC = () => {
                                 className="textarea"
                                 value={comment}
                                 onChange={(e) => setComment(e.target.value)}
-                                placeholder="например: смена №2, лаборатория №1, входной контроль"
+                                placeholder="Например: смена №2, лаборатория №1, входной контроль"
                             />
                         </label>
 
@@ -128,7 +134,7 @@ export const NewBatchPage: React.FC = () => {
                         </button>
 
                         <div className="hint">
-                            После создания откроется карточка партии, где можно добавить измерения вручную или загрузить CSV-файл.
+                            После создания откроется карточка партии, где можно ввести измерения вручную или загрузить CSV.
                         </div>
                     </form>
                 </section>

@@ -63,11 +63,7 @@ export const DashboardPage: React.FC = () => {
         setLoading(true);
         setErrorText(null);
         try {
-            const [allBatches, allProducts, allMetrics] = await Promise.all([
-                getBatches(),
-                getProducts(),
-                getMetrics(),
-            ]);
+            const [allBatches, allProducts, allMetrics] = await Promise.all([getBatches(), getProducts(), getMetrics()]);
 
             const now = Date.now();
             const periodStart = now - days * 24 * 60 * 60 * 1000;
@@ -99,8 +95,8 @@ export const DashboardPage: React.FC = () => {
 
             const avgOutOfSpecPercent = totalBatches
                 ? Math.round(
-                    sorted.reduce((acc, b) => acc + (analysisByBatchId.get(b.id)?.outOfSpecPercent ?? 0), 0) / totalBatches
-                )
+                      sorted.reduce((acc, b) => acc + (analysisByBatchId.get(b.id)?.outOfSpecPercent ?? 0), 0) / totalBatches
+                  )
                 : 0;
 
             const summary: Summary = {
@@ -111,11 +107,11 @@ export const DashboardPage: React.FC = () => {
                 avgOutOfSpecPercent,
                 lastBatch: sorted[0]
                     ? {
-                        id: sorted[0].id,
-                        batchNumber: sorted[0].batchNumber,
-                        status: sorted[0].status,
-                        createdAt: sorted[0].createdAt,
-                    }
+                          id: sorted[0].id,
+                          batchNumber: sorted[0].batchNumber,
+                          status: sorted[0].status,
+                          createdAt: sorted[0].createdAt,
+                      }
                     : null,
             };
 
@@ -197,14 +193,6 @@ export const DashboardPage: React.FC = () => {
 
             <div className="dash-content">
                 <div className="dash-container">
-                    <section className="card">
-                        <div className="kpi-title">
-                            Логика работы:
-                            `Новая партия` — сначала создаёте партию.
-                            `Импорт в партию` — загружаете файл измерений в уже созданную партию.
-                        </div>
-                    </section>
-
                     {errorText && (
                         <section className="card" style={{ color: "rgba(255, 120, 130, 0.95)" }}>
                             {errorText}
@@ -214,13 +202,13 @@ export const DashboardPage: React.FC = () => {
                     <section className="dash-kpis">
                         <Kpi title="Партии" value={data.summary.totalBatches} hint={`за ${days} дней`} />
                         <Kpi title="OK" value={data.summary.okCount} hint="в допуске" accent="ok" />
-                        <Kpi title="WARNING" value={data.summary.warningCount} hint="частично вне допуска" accent="warn" />
-                        <Kpi title="FAIL" value={data.summary.failCount} hint="критично" accent="fail" />
-                        <Kpi title="% вне допуска" value={`${data.summary.avgOutOfSpecPercent}%`} hint="среднее" />
+                        <Kpi title="WARNING" value={data.summary.warningCount} hint="частичные отклонения" accent="warn" />
+                        <Kpi title="FAIL" value={data.summary.failCount} hint="критичные отклонения" accent="fail" />
+                        <Kpi title="% вне допуска" value={`${data.summary.avgOutOfSpecPercent}%`} hint="средний по партиям" />
 
                         <div className="card">
                             <div className="kpi-title">Последняя партия</div>
-                            <div className="kpi-value">{data.summary.lastBatch ? data.summary.lastBatch.batchNumber : "—"}</div>
+                            <div className="kpi-value">{data.summary.lastBatch ? data.summary.lastBatch.batchNumber : "-"}</div>
                             <div className="kpi-hint">
                                 {data.summary.lastBatch ? (
                                     <>
@@ -238,7 +226,7 @@ export const DashboardPage: React.FC = () => {
 
                     <div className="dash-grid">
                         <section className="card">
-                            <h2 className="dash-section-title">Тренд качества (упрощённо)</h2>
+                            <h2 className="dash-section-title">Тренд качества</h2>
                             {loading ? <div className="kpi-title">Загрузка...</div> : <TrendSimple points={data.trend} />}
                         </section>
 
@@ -246,12 +234,12 @@ export const DashboardPage: React.FC = () => {
                             <h2 className="dash-section-title">Топ проблем</h2>
 
                             <div className="list" style={{ marginBottom: 12 }}>
-                                <div className="kpi-title">Показатели (выходы за допуск)</div>
+                                <div className="kpi-title">Показатели (выходы за норму)</div>
                                 {data.topMetrics.map((x) => (
                                     <div className="list-item" key={`m-${x.name}`}>
                                         <div className="list-left">
                                             <div className="list-title">{x.name}</div>
-                                            <div className="list-subtitle">выходов за норму</div>
+                                            <div className="list-subtitle">случаев отклонения</div>
                                         </div>
                                         <div className="list-value">{x.count}</div>
                                     </div>
@@ -265,7 +253,7 @@ export const DashboardPage: React.FC = () => {
                                     <div className="list-item" key={`p-${x.name}`}>
                                         <div className="list-left">
                                             <div className="list-title">{x.name}</div>
-                                            <div className="list-subtitle">WARNING + FAIL</div>
+                                            <div className="list-subtitle">партии WARNING + FAIL</div>
                                         </div>
                                         <div className="list-value">{x.count}</div>
                                     </div>
@@ -279,22 +267,24 @@ export const DashboardPage: React.FC = () => {
                         <h2 className="dash-section-title">Последние партии</h2>
                         <table className="table">
                             <thead>
-                            <tr>
-                                <th>Дата</th>
-                                <th>Продукт</th>
-                                <th>Партия</th>
-                                <th>Статус</th>
-                            </tr>
+                                <tr>
+                                    <th>Дата</th>
+                                    <th>Продукт</th>
+                                    <th>Партия</th>
+                                    <th>Статус</th>
+                                </tr>
                             </thead>
                             <tbody>
-                            {data.recent.map((b) => (
-                                <tr key={b.id} style={{ cursor: "pointer" }} onClick={() => navigate(`/batches/${b.id}`)}>
-                                    <td>{formatDate(b.createdAt)}</td>
-                                    <td>{b.product}</td>
-                                    <td>{b.batchNumber}</td>
-                                    <td><span className={statusClass(b.status)}>{b.status}</span></td>
-                                </tr>
-                            ))}
+                                {data.recent.map((b) => (
+                                    <tr key={b.id} style={{ cursor: "pointer" }} onClick={() => navigate(`/batches/${b.id}`)}>
+                                        <td>{formatDate(b.createdAt)}</td>
+                                        <td>{b.product}</td>
+                                        <td>{b.batchNumber}</td>
+                                        <td>
+                                            <span className={statusClass(b.status)}>{b.status}</span>
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </section>
@@ -316,7 +306,6 @@ export const DashboardPage: React.FC = () => {
                 <ImportCsvModal
                     onClose={() => setImportOpen(false)}
                     onDone={() => {
-                        setImportOpen(false);
                         void loadDashboard();
                     }}
                     onNeedCreate={() => {
@@ -339,10 +328,10 @@ const Kpi: React.FC<{ title: string; value: React.ReactNode; hint: string; accen
         accent === "ok"
             ? "kpi-value kpi-ok"
             : accent === "warn"
-                ? "kpi-value kpi-warn"
-                : accent === "fail"
-                    ? "kpi-value kpi-fail"
-                    : "kpi-value";
+              ? "kpi-value kpi-warn"
+              : accent === "fail"
+                ? "kpi-value kpi-fail"
+                : "kpi-value";
 
     return (
         <div className="card">
@@ -360,16 +349,16 @@ const TrendSimple: React.FC<{ points: TrendPoint[] }> = ({ points }) => {
             {points.map((p) => (
                 <div key={p.date} style={{ display: "grid", gridTemplateColumns: "72px 1fr 52px", gap: 10, alignItems: "center" }}>
                     <div className="kpi-title">{p.date}</div>
-                    <div style={{ height: 10, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+                    <div style={{ height: 10, borderRadius: 999, background: "var(--theme-track)", overflow: "hidden" }}>
                         <div
                             style={{
                                 height: "100%",
                                 width: `${Math.round((p.badPercent / max) * 100)}%`,
-                                background: "rgba(70, 120, 255, 0.55)",
+                                background: "var(--theme-accent)",
                             }}
                         />
                     </div>
-                    <div style={{ fontSize: 12, color: "rgba(233,238,248,0.85)", fontWeight: 800 }}>{p.badPercent}%</div>
+                    <div style={{ fontSize: 12, color: "var(--theme-strong)", fontWeight: 800 }}>{p.badPercent}%</div>
                 </div>
             ))}
             <div className="kpi-title">Доля проблемных партий (WARNING + FAIL) по дням.</div>
@@ -422,7 +411,9 @@ const CreateBatchModal: React.FC<{
                         Продукт
                         <select className="select" value={productId} onChange={(e) => setProductId(Number(e.target.value))}>
                             {products.map((p) => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
+                                <option key={p.id} value={p.id}>
+                                    {p.name}
+                                </option>
                             ))}
                         </select>
                     </label>
@@ -451,7 +442,9 @@ const CreateBatchModal: React.FC<{
                     {errorText && <div style={{ fontSize: 12, color: "rgba(255, 90, 110, 0.95)" }}>{errorText}</div>}
 
                     <div className="modal-actions">
-                        <button className="btn" type="button" onClick={onClose}>Отмена</button>
+                        <button className="btn" type="button" onClick={onClose}>
+                            Отмена
+                        </button>
                         <button className="btn primary" type="submit" disabled={busy}>
                             {busy ? "Создание..." : "Создать"}
                         </button>
@@ -474,6 +467,7 @@ const ImportCsvModal: React.FC<{
     const [busy, setBusy] = useState(false);
     const [resultText, setResultText] = useState<string | null>(null);
     const [errorText, setErrorText] = useState<string | null>(null);
+    const [importErrors, setImportErrors] = useState<Array<{ row: number; message: string }>>([]);
 
     useEffect(() => {
         const load = async () => {
@@ -502,12 +496,14 @@ const ImportCsvModal: React.FC<{
         setBusy(true);
         setErrorText(null);
         setResultText(null);
+        setImportErrors([]);
         try {
             const result = await importMeasurements(batchId, file);
             setResultText(
                 `Импортировано ${result.importedRows}/${result.totalRows}, пропущено ${result.skippedRows}. ` +
-                `Выход за допуск: ${result.analysis.outOfSpecPercent}%.`
+                    `Выход за допуск: ${result.analysis.outOfSpecPercent}%.`
             );
+            setImportErrors(result.errors);
             onDone();
         } catch (e: unknown) {
             setErrorText(e instanceof Error ? e.message : "Не удалось загрузить файл");
@@ -524,11 +520,13 @@ const ImportCsvModal: React.FC<{
                 {!loadingBatches && !hasBatches ? (
                     <div className="form-grid">
                         <div className="kpi-title">
-                            Пока нет ни одной партии. Сначала создайте партию через кнопку `Новая партия`,
+                            Пока нет ни одной партии. Сначала создайте партию через кнопку <code>Новая партия</code>,
                             затем вернитесь к импорту.
                         </div>
                         <div className="modal-actions">
-                            <button className="btn" type="button" onClick={onClose}>Закрыть</button>
+                            <button className="btn" type="button" onClick={onClose}>
+                                Закрыть
+                            </button>
                             <button className="btn primary" type="button" onClick={onNeedCreate}>
                                 Создать партию
                             </button>
@@ -565,14 +563,22 @@ const ImportCsvModal: React.FC<{
 
                         {errorText && <div style={{ fontSize: 12, color: "rgba(255, 90, 110, 0.95)" }}>{errorText}</div>}
                         {resultText && <div className="kpi-title">{resultText}</div>}
+                        {importErrors.length > 0 && (
+                            <div className="kpi-title" style={{ whiteSpace: "normal" }}>
+                                {importErrors.slice(0, 8).map((err) => (
+                                    <div key={`${err.row}-${err.message}`}>
+                                        Строка {err.row}: {err.message}
+                                    </div>
+                                ))}
+                                {importErrors.length > 8 && <div>... и еще {importErrors.length - 8}.</div>}
+                            </div>
+                        )}
 
                         <div className="modal-actions">
-                            <button className="btn" type="button" onClick={onClose}>Отмена</button>
-                            <button
-                                className="btn primary"
-                                type="submit"
-                                disabled={busy || loadingBatches || !hasBatches || !file}
-                            >
+                            <button className="btn" type="button" onClick={onClose}>
+                                Отмена
+                            </button>
+                            <button className="btn primary" type="submit" disabled={busy || loadingBatches || !hasBatches || !file}>
                                 {busy ? "Загрузка..." : "Импортировать"}
                             </button>
                         </div>
@@ -601,11 +607,7 @@ function emptyDashboardData(): DashboardData {
     };
 }
 
-function buildTrend(
-    batches: BatchDto[],
-    analysisByBatchId: Map<number, BatchAnalysisDto>,
-    days: number
-): TrendPoint[] {
+function buildTrend(batches: BatchDto[], analysisByBatchId: Map<number, BatchAnalysisDto>, days: number): TrendPoint[] {
     const maxPoints = Math.min(10, days);
     const result: TrendPoint[] = [];
     const now = new Date();
@@ -625,8 +627,8 @@ function buildTrend(
         const avgOut =
             total > 0
                 ? Math.round(
-                    batchesByDay.reduce((acc, b) => acc + (analysisByBatchId.get(b.id)?.outOfSpecPercent ?? 0), 0) / total
-                )
+                      batchesByDay.reduce((acc, b) => acc + (analysisByBatchId.get(b.id)?.outOfSpecPercent ?? 0), 0) / total
+                  )
                 : 0;
 
         result.push({

@@ -2,6 +2,7 @@ package ru.diplom.labquality.web
 
 import jakarta.validation.Valid
 import org.springframework.http.MediaType
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
@@ -24,6 +25,10 @@ class BatchController(private val service: BatchService) {
 
     @GetMapping("/{id}")
     fun get(@PathVariable id: Long): BatchResponse = service.get(id).toDto()
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun delete(@PathVariable id: Long) = service.delete(id)
 
     @PostMapping("/{batchId}/measurements")
     fun addMeasurement(

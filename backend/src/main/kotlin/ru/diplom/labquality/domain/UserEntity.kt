@@ -8,6 +8,9 @@ class UserEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
+    @Column(name = "full_name")
+    var fullName: String? = null,
+
     @Column(nullable = false, unique = true)
     var email: String,
 

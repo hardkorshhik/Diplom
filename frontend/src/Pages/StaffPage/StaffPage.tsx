@@ -1,28 +1,38 @@
-// src/Pages/StaffPage/StaffPage.tsx
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import "./staff.css";
 import { useNavigate } from "react-router-dom";
 import { clearTokenCookie } from "../../Cookie";
+import {
+    createUser,
+    deleteUser,
+    getUsers,
+    updateUser,
+    type UserDto,
+    type UserRole,
+} from "../../Api/LabApi";
 
-type StaffRole = "ADMIN" | "QA" | "LAB";
-
-type StaffMember = {
-    id: number;
-    fullName: string;
-    email: string;
-    role: StaffRole;
-};
-
-const roleLabel: Record<StaffRole, string> = {
+const roleLabel: Record<UserRole, string> = {
     ADMIN: "ADMIN",
     QA: "QA",
     LAB: "LAB",
 };
 
-const rightsByRole: Record<StaffRole, string[]> = {
-    ADMIN: ["CRUD пользователей", "CRUD продуктов/метрик/норм", "Просмотр всех партий и измерений"],
-    QA: ["Просмотр партий/измерений/норм", "Анализ отклонений", "Отчёты/заключения (демо)"],
-    LAB: ["Создание партий", "Добавление/импорт измерений", "Просмотр результатов сравнения"],
+const rightsByRole: Record<UserRole, string[]> = {
+    ADMIN: [
+        "Полный доступ к системе и справочникам",
+        "Управление сотрудниками и ролями",
+        "Удаление партий и обслуживание данных",
+    ],
+    QA: [
+        "Просмотр партий, измерений и норм",
+        "Контроль отклонений и анализ качества",
+        "Подготовка экспертного заключения",
+    ],
+    LAB: [
+        "Создание партий",
+        "Ввод и импорт измерений",
+        "Просмотр результатов первичного анализа",
+    ],
 };
 
 const generatePassword = (len: number = 12): string => {
@@ -33,10 +43,9 @@ const generatePassword = (len: number = 12): string => {
     const all = lower + upper + digits + symbols;
 
     const pick = (s: string) => s[Math.floor(Math.random() * s.length)];
-
     const chars: string[] = [pick(lower), pick(upper), pick(digits), pick(symbols)];
-    for (let i = chars.length; i < len; i++) chars.push(pick(all));
 
+    for (let i = chars.length; i < len; i++) chars.push(pick(all));
     for (let i = chars.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [chars[i], chars[j]] = [chars[j], chars[i]];
@@ -47,72 +56,66 @@ const generatePassword = (len: number = 12): string => {
 export const StaffPage: React.FC = () => {
     const navigate = useNavigate();
 
-    const initialStaff = useMemo<StaffMember[]>(
-        () => [
-            { id: 1, fullName: "Системный администратор", email: "admin@ammophos.ru", role: "ADMIN" },
-            { id: 2, fullName: "Инженер по качеству (ОТК)", email: "qa@ammophos.ru", role: "QA" },
-            { id: 3, fullName: "Лаборант смены №1", email: "lab1@ammophos.ru", role: "LAB" },
-            { id: 4, fullName: "Лаборант смены №2", email: "lab2@ammophos.ru", role: "LAB" },
-        ],
-        []
-    );
-
-    const [staff, setStaff] = useState<StaffMember[]>(initialStaff);
-
-    const [query, setQuery] = useState<string>("");
+    const [staff, setStaff] = useState<UserDto[]>([]);
+    const [query, setQuery] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [errorText, setErrorText] = useState<string | null>(null);
 
     const [createOpen, setCreateOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
-    const [editing, setEditing] = useState<StaffMember | null>(null);
+    const [editing, setEditing] = useState<UserDto | null>(null);
 
-    const openEdit = (member: StaffMember) => {
-        setEditing(member);
-        setEditOpen(true);
-    };
-
-    const onCreate = (m: { fullName: string; email: string; role: StaffRole; password?: string }) => {
-        const nextId = Math.max(...staff.map((x) => x.id), 0) + 1;
-        setStaff([{ id: nextId, fullName: m.fullName, email: m.email, role: m.role }, ...staff]);
-        setCreateOpen(false);
-
-    };
-
-    const onUpdate = (updated: StaffMember) => {
-        setStaff(staff.map((x) => (x.id === updated.id ? updated : x)));
-        setEditOpen(false);
-        setEditing(null);
-    };
-
-    const onDelete = (id: number) => {
-        const member = staff.find((x) => x.id === id);
-        if (!member) return;
-
-        const adminsCount = staff.filter((x) => x.role === "ADMIN").length;
-        if (member.role === "ADMIN" && adminsCount <= 1) {
-            alert("Нельзя удалить единственного администратора.");
-            return;
+    const load = useCallback(async () => {
+        setLoading(true);
+        setErrorText(null);
+        try {
+            const users = await getUsers();
+            setStaff(users);
+        } catch (e: unknown) {
+            setErrorText(e instanceof Error ? e.message : "Не удалось загрузить список сотрудников");
+        } finally {
+            setLoading(false);
         }
+    }, []);
 
-        const ok = window.confirm(`Удалить сотрудника "${member.fullName}" (${member.email})?`);
-        if (!ok) return;
+    useEffect(() => {
+        void load();
+    }, [load]);
 
-        setStaff(staff.filter((x) => x.id !== id));
-
-        if (editing?.id === id) {
-            setEditOpen(false);
-            setEditing(null);
-        }
-    };
+    const adminsCount = useMemo(() => staff.filter((x) => x.role === "ADMIN").length, [staff]);
 
     const filteredStaff = useMemo(() => {
         const q = query.trim().toLowerCase();
         if (!q) return staff;
+        return staff.filter((s) => `${s.fullName} ${s.email} ${s.role}`.toLowerCase().includes(q));
+    }, [query, staff]);
 
-        return staff.filter((s) => {
-            const hay = `${s.fullName} ${s.email} ${s.role}`.toLowerCase();
-            return hay.includes(q);
-        });
-    }, [staff, query]);
+    const onDelete = useCallback(
+        async (id: number) => {
+            const member = staff.find((x) => x.id === id);
+            if (!member) return;
+
+            if (member.role === "ADMIN" && adminsCount <= 1) {
+                alert("Нельзя удалить единственного администратора.");
+                return;
+            }
+
+            const ok = window.confirm(`Удалить сотрудника "${member.fullName}" (${member.email})?`);
+            if (!ok) return;
+
+            try {
+                await deleteUser(id);
+                await load();
+                if (editing?.id === id) {
+                    setEditOpen(false);
+                    setEditing(null);
+                }
+            } catch (e: unknown) {
+                alert(e instanceof Error ? e.message : "Не удалось удалить сотрудника");
+            }
+        },
+        [adminsCount, editing?.id, load, staff]
+    );
 
     return (
         <div className="staff-page">
@@ -124,7 +127,8 @@ export const StaffPage: React.FC = () => {
                     <div style={{ minWidth: 0 }}>
                         <h1 className="staff-title">Сотрудники и роли доступа</h1>
                         <p className="staff-subtitle">
-                            Управление сотрудниками доступно только роли <b>ADMIN</b>. Права назначаются по роли (ADMIN/QA/LAB).
+                            Раздел доступен роли <b>ADMIN</b>. Здесь настраиваются реальные учетные записи и роли
+                            (`ADMIN`, `QA`, `LAB`) для работы системы контроля качества.
                         </p>
 
                         <div style={{ marginTop: 10, maxWidth: 420 }}>
@@ -132,7 +136,7 @@ export const StaffPage: React.FC = () => {
                                 className="input"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
-                                placeholder="Поиск: email или роль (например: lab)"
+                                placeholder="Поиск по ФИО, email или роли"
                             />
                         </div>
                     </div>
@@ -158,66 +162,78 @@ export const StaffPage: React.FC = () => {
                     </div>
                 </header>
 
+                {errorText && (
+                    <section className="card" style={{ color: "rgba(255, 120, 130, 0.95)" }}>
+                        {errorText}
+                    </section>
+                )}
+
                 <section className="card">
                     <div className="small" style={{ marginBottom: 10 }}>
                         Показано: {filteredStaff.length} / {staff.length}
                         {query.trim() ? ` (фильтр: "${query.trim()}")` : ""}
                     </div>
 
-                    <table className="table">
-                        <thead>
-                        <tr>
-                            <th>Сотрудник</th>
-                            <th>Email</th>
-                            <th>Роль</th>
-                            <th>Права (по роли)</th>
-                            <th></th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {filteredStaff.map((s) => (
-                            <tr key={s.id}>
-                                <td>
-                                    <div style={{ fontWeight: 800 }}>{s.fullName}</div>
-                                    <div className="small">ID: {s.id}</div>
-                                </td>
-                                <td>{s.email}</td>
-                                <td>
-                                    <span className="role-pill">{roleLabel[s.role]}</span>
-                                </td>
-                                <td>
-                                    <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>
-                                        {rightsByRole[s.role].map((x) => (
-                                            <li key={x}>{x}</li>
-                                        ))}
-                                    </ul>
-                                </td>
-                                <td style={{ width: 220 }}>
-                                    <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                                        <button className="btn" onClick={() => openEdit(s)}>
-                                            Редактировать
-                                        </button>
-                                        <button className="btn" onClick={() => onDelete(s.id)} title="Удалить сотрудника">
-                                            Удалить
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                    {loading ? (
+                        <div className="small">Загрузка...</div>
+                    ) : (
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th>Сотрудник</th>
+                                    <th>Email</th>
+                                    <th>Роль</th>
+                                    <th>Права</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredStaff.map((s) => (
+                                    <tr key={s.id}>
+                                        <td>
+                                            <div style={{ fontWeight: 800 }}>{s.fullName}</div>
+                                            <div className="small">ID: {s.id}</div>
+                                        </td>
+                                        <td>{s.email}</td>
+                                        <td>
+                                            <span className="role-pill">{roleLabel[s.role]}</span>
+                                        </td>
+                                        <td>
+                                            <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>
+                                                {rightsByRole[s.role].map((x) => (
+                                                    <li key={x}>{x}</li>
+                                                ))}
+                                            </ul>
+                                        </td>
+                                        <td style={{ width: 220 }}>
+                                            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                                                <button
+                                                    className="btn"
+                                                    onClick={() => {
+                                                        setEditing(s);
+                                                        setEditOpen(true);
+                                                    }}
+                                                >
+                                                    Редактировать
+                                                </button>
+                                                <button className="btn" onClick={() => void onDelete(s.id)}>
+                                                    Удалить
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
 
-                        {filteredStaff.length === 0 && (
-                            <tr>
-                                <td colSpan={5} className="small" style={{ padding: "14px 8px" }}>
-                                    Ничего не найдено.
-                                </td>
-                            </tr>
-                        )}
-                        </tbody>
-                    </table>
-
-                    <div className="small" style={{ marginTop: 10 }}>
-                        Примечание для диплома: права назначаются по роли, чтобы исключить ошибки и упростить контроль доступа.
-                    </div>
+                                {filteredStaff.length === 0 && (
+                                    <tr>
+                                        <td colSpan={5} className="small" style={{ padding: "14px 8px" }}>
+                                            Ничего не найдено.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    )}
                 </section>
             </div>
 
@@ -226,7 +242,20 @@ export const StaffPage: React.FC = () => {
                     title="Добавить сотрудника"
                     mode="create"
                     onClose={() => setCreateOpen(false)}
-                    onSubmit={(m) => onCreate(m)}
+                    onSubmit={async (m) => {
+                        try {
+                            await createUser({
+                                fullName: m.fullName,
+                                email: m.email,
+                                role: m.role,
+                                password: m.password || generatePassword(12),
+                            });
+                            setCreateOpen(false);
+                            await load();
+                        } catch (e: unknown) {
+                            alert(e instanceof Error ? e.message : "Не удалось создать сотрудника");
+                        }
+                    }}
                 />
             )}
 
@@ -239,9 +268,23 @@ export const StaffPage: React.FC = () => {
                         setEditOpen(false);
                         setEditing(null);
                     }}
-                    onSubmit={(m) => onUpdate({ id: editing.id, fullName: m.fullName, email: m.email, role: m.role })}
-                    onDelete={() => onDelete(editing.id)}
-                    deleteDisabled={editing.role === "ADMIN" && staff.filter((x) => x.role === "ADMIN").length <= 1}
+                    onSubmit={async (m) => {
+                        try {
+                            await updateUser(editing.id, {
+                                fullName: m.fullName,
+                                email: m.email,
+                                role: m.role,
+                                password: m.password || undefined,
+                            });
+                            setEditOpen(false);
+                            setEditing(null);
+                            await load();
+                        } catch (e: unknown) {
+                            alert(e instanceof Error ? e.message : "Не удалось обновить сотрудника");
+                        }
+                    }}
+                    onDelete={() => void onDelete(editing.id)}
+                    deleteDisabled={editing.role === "ADMIN" && adminsCount <= 1}
                 />
             )}
         </div>
@@ -251,14 +294,14 @@ export const StaffPage: React.FC = () => {
 type StaffModalModel = {
     fullName: string;
     email: string;
-    role: StaffRole;
+    role: UserRole;
     password?: string;
 };
 
 const StaffModal: React.FC<{
     title: string;
     mode: "create" | "edit";
-    initial?: StaffMember;
+    initial?: UserDto;
     onClose: () => void;
     onSubmit: (model: StaffModalModel) => void;
     onDelete?: () => void;
@@ -266,10 +309,9 @@ const StaffModal: React.FC<{
 }> = ({ title, mode, initial, onClose, onSubmit, onDelete, deleteDisabled }) => {
     const [fullName, setFullName] = useState(initial?.fullName ?? "");
     const [email, setEmail] = useState(initial?.email ?? "");
-    const [role, setRole] = useState<StaffRole>(initial?.role ?? "LAB");
-
-    const [password, setPassword] = useState<string>(mode === "create" ? generatePassword(12) : "");
-    const [showPassword, setShowPassword] = useState<boolean>(false);
+    const [role, setRole] = useState<UserRole>(initial?.role ?? "LAB");
+    const [password, setPassword] = useState(mode === "create" ? generatePassword(12) : "");
+    const [showPassword, setShowPassword] = useState(false);
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -277,7 +319,7 @@ const StaffModal: React.FC<{
             fullName: fullName.trim(),
             email: email.trim().toLowerCase(),
             role,
-            ...(mode === "create" ? { password } : {}),
+            password: password.trim() || undefined,
         });
     };
 
@@ -288,17 +330,17 @@ const StaffModal: React.FC<{
                     {title}
                 </h2>
                 <p className="staff-subtitle" style={{ marginTop: 6 }}>
-                    Права назначаются по выбранной роли.
+                    Права назначаются выбранной ролью.
                 </p>
 
                 <form className="form-grid" onSubmit={submit}>
                     <label className="label">
-                        Должность
+                        ФИО / должность
                         <input
                             className="input"
                             value={fullName}
                             onChange={(e) => setFullName(e.target.value)}
-                            placeholder="например: Лаборант смены №3"
+                            placeholder="Например: Лаборант смены №3"
                             required
                         />
                     </label>
@@ -310,56 +352,53 @@ const StaffModal: React.FC<{
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="user@ammophos.ru"
+                            placeholder="user@example.com"
                             required
                         />
                     </label>
 
-                    {mode === "create" && (
-                        <label className="label">
-                            Пароль
-                            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                                <input
-                                    className="input"
-                                    type={showPassword ? "text" : "password"}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="Пароль"
-                                    required
-                                    style={{ flex: 1 }}
-                                />
-                                <button
-                                    type="button"
-                                    className="btn"
-                                    onClick={() => setPassword(generatePassword(12))}
-                                    title="Сгенерировать пароль"
-                                >
-                                    🎲
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn"
-                                    onClick={() => setShowPassword((v) => !v)}
-                                    title={showPassword ? "Скрыть" : "Показать"}
-                                >
-                                    {showPassword ? "🙈" : "👁️"}
-                                </button>
-                            </div>
-                            <div className="small">Пароль будет показан администратору для передачи сотруднику.</div>
-                        </label>
-                    )}
-
                     <label className="label">
                         Роль
-                        <select className="select" value={role} onChange={(e) => setRole(e.target.value as StaffRole)}>
-                            <option value="LAB">LAB (Лаборант)</option>
-                            <option value="QA">QA (Инженер качества)</option>
-                            <option value="ADMIN">ADMIN (Администратор)</option>
+                        <select className="select" value={role} onChange={(e) => setRole(e.target.value as UserRole)}>
+                            <option value="LAB">LAB (лаборант)</option>
+                            <option value="QA">QA (инженер по качеству)</option>
+                            <option value="ADMIN">ADMIN (администратор)</option>
                         </select>
                     </label>
 
-                    <div style={{ marginTop: 2 }}>
-                        <div className="small">Права для выбранной роли:</div>
+                    <label className="label">
+                        {mode === "create" ? "Начальный пароль" : "Новый пароль (опционально)"}
+                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                            <input
+                                className="input"
+                                type={showPassword ? "text" : "password"}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder={mode === "create" ? "Сгенерирован автоматически" : "Оставьте пустым, чтобы не менять"}
+                                required={mode === "create"}
+                                style={{ flex: 1 }}
+                            />
+                            <button
+                                type="button"
+                                className="btn"
+                                onClick={() => setPassword(generatePassword(12))}
+                                title="Сгенерировать пароль"
+                            >
+                                Ген.
+                            </button>
+                            <button
+                                type="button"
+                                className="btn"
+                                onClick={() => setShowPassword((v) => !v)}
+                                title={showPassword ? "Скрыть пароль" : "Показать пароль"}
+                            >
+                                {showPassword ? "Скрыть" : "Показать"}
+                            </button>
+                        </div>
+                    </label>
+
+                    <div>
+                        <div className="small">Права роли:</div>
                         <ul className="small" style={{ margin: "6px 0 0", paddingLeft: 18 }}>
                             {rightsByRole[role].map((x) => (
                                 <li key={x}>{x}</li>

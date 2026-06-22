@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import "./batchDetails.css";
 import {
     addMeasurement,
+    deleteBatch,
     getBatch,
     getBatchAnalysis,
     getBatchMeasurements,
@@ -13,11 +14,14 @@ import {
     type BatchAnalysisDto,
     type BatchDto,
     type BatchStatus,
+    type ImportRowErrorDto,
     type MeasurementDto,
     type MetricDto,
     type NormDto,
     type ProductDto,
 } from "../../Api/LabApi";
+import { getTokenFromCookies } from "../../Cookie";
+import { parseJwt } from "../../Auth/Jwt";
 
 const statusClass = (s: BatchStatus) => {
     if (s === "OK") return "status-pill status-ok";
@@ -29,6 +33,10 @@ export const BatchDetailsPage: React.FC = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const batchId = Number(id);
+
+    const token = getTokenFromCookies();
+    const role = (token ? parseJwt(token)?.role : null) as string | null;
+    const canDeleteBatch = role === "ADMIN";
 
     const [batch, setBatch] = useState<BatchDto | null>(null);
     const [products, setProducts] = useState<ProductDto[]>([]);
@@ -48,28 +56,19 @@ export const BatchDetailsPage: React.FC = () => {
     const [importFile, setImportFile] = useState<File | null>(null);
     const [importBusy, setImportBusy] = useState(false);
     const [importResultText, setImportResultText] = useState<string | null>(null);
+    const [importErrors, setImportErrors] = useState<ImportRowErrorDto[]>([]);
+    const [deleteBusy, setDeleteBusy] = useState(false);
 
-    const productById = useMemo(
-        () => new Map(products.map((p) => [p.id, p])),
-        [products]
-    );
-    const metricById = useMemo(
-        () => new Map(metrics.map((m) => [m.id, m])),
-        [metrics]
-    );
-    const normByMetricId = useMemo(
-        () => new Map(norms.map((n) => [n.metricId, n])),
-        [norms]
-    );
+    const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
+    const metricById = useMemo(() => new Map(metrics.map((m) => [m.id, m])), [metrics]);
+    const normByMetricId = useMemo(() => new Map(norms.map((n) => [n.metricId, n])), [norms]);
+
     const measuredValuesByMetricId = useMemo(() => {
         const map = new Map<number, number[]>();
-        for (const measurement of measurements) {
-            const values = map.get(measurement.metricId);
-            if (values) {
-                values.push(measurement.value);
-            } else {
-                map.set(measurement.metricId, [measurement.value]);
-            }
+        for (const m of measurements) {
+            const values = map.get(m.metricId);
+            if (values) values.push(m.value);
+            else map.set(m.metricId, [m.value]);
         }
         return map;
     }, [measurements]);
@@ -125,16 +124,8 @@ export const BatchDetailsPage: React.FC = () => {
             setAddBusy(true);
             setErrorText(null);
             try {
-                const measuredAt = addMeasuredAt
-                    ? new Date(addMeasuredAt).toISOString()
-                    : undefined;
-
-                await addMeasurement(batch.id, {
-                    metricId: addMetricId,
-                    value: parsed,
-                    measuredAt,
-                });
-
+                const measuredAt = addMeasuredAt ? new Date(addMeasuredAt).toISOString() : undefined;
+                await addMeasurement(batch.id, { metricId: addMetricId, value: parsed, measuredAt });
                 setAddValue("");
                 setAddMeasuredAt("");
                 await load();
@@ -155,12 +146,14 @@ export const BatchDetailsPage: React.FC = () => {
             setImportBusy(true);
             setErrorText(null);
             setImportResultText(null);
+            setImportErrors([]);
             try {
                 const result = await importMeasurements(batch.id, importFile);
                 setImportResultText(
                     `Импортировано: ${result.importedRows}/${result.totalRows}. ` +
-                    `Пропущено: ${result.skippedRows}. Выход за допуск: ${result.analysis.outOfSpecPercent}%.`
+                        `Пропущено: ${result.skippedRows}. Выход за допуск: ${result.analysis.outOfSpecPercent}%.`
                 );
+                setImportErrors(result.errors);
                 await load();
             } catch (e: unknown) {
                 setErrorText(e instanceof Error ? e.message : "Не удалось импортировать файл");
@@ -170,6 +163,23 @@ export const BatchDetailsPage: React.FC = () => {
         },
         [batch, importFile, load]
     );
+
+    const onDeleteBatch = useCallback(async () => {
+        if (!batch) return;
+        const ok = window.confirm(`Удалить партию "${batch.batchNumber}" вместе со всеми измерениями?`);
+        if (!ok) return;
+
+        setDeleteBusy(true);
+        setErrorText(null);
+        try {
+            await deleteBatch(batch.id);
+            navigate("/batches", { replace: true });
+        } catch (e: unknown) {
+            setErrorText(e instanceof Error ? e.message : "Не удалось удалить партию");
+        } finally {
+            setDeleteBusy(false);
+        }
+    }, [batch, navigate]);
 
     if (loading) {
         return (
@@ -192,7 +202,9 @@ export const BatchDetailsPage: React.FC = () => {
                     <section className="card">
                         {errorText || "Партия не найдена"}
                         <div style={{ marginTop: 12 }}>
-                            <button className="btn" onClick={() => navigate("/batches")}>Назад</button>
+                            <button className="btn" onClick={() => navigate("/batches")}>
+                                Назад
+                            </button>
                         </div>
                     </section>
                 </div>
@@ -223,8 +235,17 @@ export const BatchDetailsPage: React.FC = () => {
                     </div>
 
                     <div className="actions">
-                        <button className="btn" onClick={() => navigate("/batches")}>Назад</button>
-                        <button className="btn" onClick={() => void load()}>Обновить</button>
+                        <button className="btn" onClick={() => navigate("/batches")}>
+                            Назад
+                        </button>
+                        <button className="btn" onClick={() => void load()}>
+                            Обновить
+                        </button>
+                        {canDeleteBatch && (
+                            <button className="btn" onClick={() => void onDeleteBatch()} disabled={deleteBusy}>
+                                {deleteBusy ? "Удаление..." : "Удалить партию"}
+                            </button>
+                        )}
                     </div>
                 </header>
 
@@ -283,11 +304,12 @@ export const BatchDetailsPage: React.FC = () => {
                     <div className="card">
                         <h2 className="section-title">Импорт из файла</h2>
                         <p className="batch-subtitle" style={{ marginBottom: 12 }}>
-                            Формат CSV: <code>metricId,value,measuredAt</code> или <code>metricName,value,measuredAt</code>
+                            Формат CSV: <code>metricId,value,measuredAt</code> или{" "}
+                            <code>metricName,value,measuredAt</code>
                         </p>
                         <form className="form-grid" onSubmit={onImport}>
                             <label className="label">
-                                Файл измерений
+                                CSV файл измерений
                                 <input
                                     className="input"
                                     type="file"
@@ -302,7 +324,28 @@ export const BatchDetailsPage: React.FC = () => {
                             </button>
                         </form>
                         {importResultText && (
-                            <div className="batch-subtitle" style={{ marginTop: 10 }}>{importResultText}</div>
+                            <div className="batch-subtitle" style={{ marginTop: 10 }}>
+                                {importResultText}
+                            </div>
+                        )}
+                        {importErrors.length > 0 && (
+                            <div style={{ marginTop: 10 }}>
+                                <div className="batch-subtitle" style={{ marginBottom: 6 }}>
+                                    Ошибки импорта (показано до 10):
+                                </div>
+                                <ul className="batch-subtitle" style={{ margin: 0, paddingLeft: 16 }}>
+                                    {importErrors.slice(0, 10).map((err) => (
+                                        <li key={`${err.row}-${err.message}`}>
+                                            Строка {err.row}: {err.message}
+                                        </li>
+                                    ))}
+                                </ul>
+                                {importErrors.length > 10 && (
+                                    <div className="batch-subtitle" style={{ marginTop: 6 }}>
+                                        ...и еще {importErrors.length - 10}.
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </div>
                 </section>
@@ -335,7 +378,9 @@ export const BatchDetailsPage: React.FC = () => {
                                         <td>{formatNumber(s.min)}</td>
                                         <td>{formatNumber(s.avg)}</td>
                                         <td>{formatNumber(s.max)}</td>
-                                        <td>{s.outOfSpecCount}/{s.count} ({outPercent}%)</td>
+                                        <td>
+                                            {s.outOfSpecCount}/{s.count} ({outPercent}%)
+                                        </td>
                                     </tr>
                                 );
                             })}
@@ -390,8 +435,7 @@ const formatNorm = (minValue: number | null, maxValue: number | null): string =>
     return `<= ${formatNumber(maxValue as number)}`;
 };
 
-const formatNumber = (value: number): string =>
-    Number.isInteger(value) ? String(value) : value.toFixed(3);
+const formatNumber = (value: number): string => (Number.isInteger(value) ? String(value) : value.toFixed(3));
 
 const formatMeasuredValues = (values: number[]): string => {
     if (values.length === 0) return "Нет данных";

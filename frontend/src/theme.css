@@ -1,0 +1,266 @@
+:root {
+    --theme-page: #0b1220;
+    --theme-text: #e9eef8;
+    --theme-muted: rgba(233, 238, 248, 0.62);
+    --theme-soft: rgba(233, 238, 248, 0.78);
+    --theme-strong: rgba(233, 238, 248, 0.9);
+    --theme-card: rgba(12, 18, 32, 0.62);
+    --theme-card-solid: rgba(12, 18, 32, 0.86);
+    --theme-field: rgba(7, 12, 22, 0.55);
+    --theme-field-hover: rgba(7, 12, 22, 0.62);
+    --theme-border: rgba(255, 255, 255, 0.12);
+    --theme-border-soft: rgba(255, 255, 255, 0.08);
+    --theme-shadow: rgba(0, 0, 0, 0.25);
+    --theme-overlay: rgba(0, 0, 0, 0.45);
+    --theme-accent: rgba(70, 120, 255, 0.55);
+    --theme-accent-bg: rgba(70, 120, 255, 0.22);
+    --theme-row-hover: rgba(7, 12, 22, 0.25);
+    --theme-track: rgba(255, 255, 255, 0.08);
+    --theme-danger: rgba(255, 90, 110, 0.95);
+}
+
+html[data-theme="light"] {
+    --theme-page: #f3f7fb;
+    --theme-text: #172033;
+    --theme-muted: rgba(23, 32, 51, 0.58);
+    --theme-soft: rgba(23, 32, 51, 0.72);
+    --theme-strong: rgba(23, 32, 51, 0.88);
+    --theme-card: rgba(255, 255, 255, 0.82);
+    --theme-card-solid: rgba(255, 255, 255, 0.96);
+    --theme-field: rgba(255, 255, 255, 0.9);
+    --theme-field-hover: rgba(247, 250, 253, 0.96);
+    --theme-border: rgba(43, 64, 96, 0.14);
+    --theme-border-soft: rgba(43, 64, 96, 0.10);
+    --theme-shadow: rgba(34, 61, 91, 0.13);
+    --theme-overlay: rgba(20, 30, 45, 0.24);
+    --theme-accent: rgba(48, 95, 205, 0.62);
+    --theme-accent-bg: rgba(48, 95, 205, 0.10);
+    --theme-row-hover: rgba(48, 95, 205, 0.06);
+    --theme-track: rgba(43, 64, 96, 0.10);
+    --theme-danger: rgba(196, 44, 64, 0.95);
+}
+
+body {
+    background: var(--theme-page);
+}
+
+html[data-theme="light"] .auth-page,
+html[data-theme="light"] .dash-page,
+html[data-theme="light"] .batches-page,
+html[data-theme="light"] .newbatch-page,
+html[data-theme="light"] .batch-page,
+html[data-theme="light"] .staff-page {
+    background: var(--theme-page);
+    color: var(--theme-text);
+}
+
+html[data-theme="light"] .auth-bg,
+html[data-theme="light"] .dash-bg,
+html[data-theme="light"] .batches-bg,
+html[data-theme="light"] .newbatch-bg,
+html[data-theme="light"] .batch-bg,
+html[data-theme="light"] .staff-bg {
+    background:
+        radial-gradient(620px 420px at 13% 18%, rgba(48, 95, 205, 0.18), transparent 58%),
+        radial-gradient(760px 520px at 88% 24%, rgba(0, 155, 130, 0.12), transparent 62%),
+        radial-gradient(860px 620px at 54% 88%, rgba(255, 190, 80, 0.16), transparent 64%),
+        linear-gradient(180deg, #f8fbff 0%, #eef4fa 100%);
+    filter: blur(16px);
+}
+
+html[data-theme="light"] .auth-noise,
+html[data-theme="light"] .dash-noise,
+html[data-theme="light"] .batches-noise,
+html[data-theme="light"] .newbatch-noise,
+html[data-theme="light"] .batch-noise,
+html[data-theme="light"] .staff-noise {
+    mix-blend-mode: multiply;
+    opacity: 0.08;
+}
+
+html[data-theme="light"] .app-header {
+    background: rgba(255, 255, 255, 0.72);
+    border-bottom-color: var(--theme-border);
+    box-shadow: 0 12px 34px rgba(34, 61, 91, 0.08);
+}
+
+html[data-theme="light"] .app-title,
+html[data-theme="light"] .auth-title,
+html[data-theme="light"] .dash-title,
+html[data-theme="light"] .batches-title,
+html[data-theme="light"] .batch-title,
+html[data-theme="light"] .title,
+html[data-theme="light"] .staff-title,
+html[data-theme="light"] .dash-section-title,
+html[data-theme="light"] .section-title {
+    color: var(--theme-text);
+}
+
+html[data-theme="light"] .card,
+html[data-theme="light"] .auth-card,
+html[data-theme="light"] .dash-header,
+html[data-theme="light"] .modal {
+    background: var(--theme-card);
+    border-color: var(--theme-border);
+    box-shadow: 0 18px 58px var(--theme-shadow);
+}
+
+html[data-theme="light"] .auth-badge,
+html[data-theme="light"] .dash-badge,
+html[data-theme="light"] .app-badge {
+    background: rgba(48, 95, 205, 0.10);
+    border-color: rgba(48, 95, 205, 0.18);
+    color: #244a9a;
+}
+
+html[data-theme="light"] .auth-subtitle,
+html[data-theme="light"] .dash-subtitle,
+html[data-theme="light"] .batches-subtitle,
+html[data-theme="light"] .batch-subtitle,
+html[data-theme="light"] .subtitle,
+html[data-theme="light"] .staff-subtitle,
+html[data-theme="light"] .kpi-title,
+html[data-theme="light"] .kpi-hint,
+html[data-theme="light"] .hint,
+html[data-theme="light"] .small,
+html[data-theme="light"] .auth-hint,
+html[data-theme="light"] .list-subtitle,
+html[data-theme="light"] .app-filter-inline,
+html[data-theme="light"] .app-user-pill span {
+    color: var(--theme-muted);
+}
+
+html[data-theme="light"] .auth-label,
+html[data-theme="light"] .label,
+html[data-theme="light"] .table td,
+html[data-theme="light"] .list-title,
+html[data-theme="light"] .list-value,
+html[data-theme="light"] .app-user-pill {
+    color: var(--theme-strong);
+}
+
+html[data-theme="light"] .table th {
+    color: var(--theme-muted);
+}
+
+html[data-theme="light"] .table th,
+html[data-theme="light"] .table td {
+    border-bottom-color: var(--theme-border-soft);
+}
+
+html[data-theme="light"] .btn,
+html[data-theme="light"] .dash-btn,
+html[data-theme="light"] .dash-mini-btn,
+html[data-theme="light"] .app-btn,
+html[data-theme="light"] .dash-seg-btn {
+    background: rgba(255, 255, 255, 0.66);
+    border-color: var(--theme-border);
+    color: var(--theme-strong);
+}
+
+html[data-theme="light"] .btn:hover,
+html[data-theme="light"] .dash-btn:hover,
+html[data-theme="light"] .dash-mini-btn:hover,
+html[data-theme="light"] .app-btn:hover,
+html[data-theme="light"] .dash-seg-btn:hover {
+    background: rgba(248, 251, 255, 0.96);
+    border-color: rgba(48, 95, 205, 0.24);
+}
+
+html[data-theme="light"] .btn.primary,
+html[data-theme="light"] .dash-btn.primary,
+html[data-theme="light"] .dash-mini-btn.primary,
+html[data-theme="light"] .app-btn.primary,
+html[data-theme="light"] .auth-button,
+html[data-theme="light"] .dash-seg-btn.active {
+    background: rgba(48, 95, 205, 0.12);
+    border-color: rgba(48, 95, 205, 0.28);
+    color: #244a9a;
+}
+
+html[data-theme="light"] .btn.primary:hover,
+html[data-theme="light"] .dash-btn.primary:hover,
+html[data-theme="light"] .dash-mini-btn.primary:hover,
+html[data-theme="light"] .app-btn.primary:hover,
+html[data-theme="light"] .auth-button:hover {
+    background: rgba(48, 95, 205, 0.17);
+    border-color: rgba(48, 95, 205, 0.42);
+}
+
+html[data-theme="light"] .input,
+html[data-theme="light"] .select,
+html[data-theme="light"] .textarea,
+html[data-theme="light"] .auth-input,
+html[data-theme="light"] .app-select,
+html[data-theme="light"] .dash-select {
+    background: var(--theme-field);
+    border-color: var(--theme-border);
+    color: var(--theme-text);
+}
+
+html[data-theme="light"] .input::placeholder,
+html[data-theme="light"] .textarea::placeholder,
+html[data-theme="light"] .auth-input::placeholder {
+    color: rgba(23, 32, 51, 0.36);
+}
+
+html[data-theme="light"] .input:focus,
+html[data-theme="light"] .select:focus,
+html[data-theme="light"] .textarea:focus,
+html[data-theme="light"] .auth-input:focus,
+html[data-theme="light"] .app-select:focus,
+html[data-theme="light"] .dash-select:focus {
+    border-color: rgba(48, 95, 205, 0.46);
+    box-shadow: 0 0 0 4px rgba(48, 95, 205, 0.12);
+}
+
+html[data-theme="light"] .list-item,
+html[data-theme="light"] .dash-seg,
+html[data-theme="light"] .role-pill,
+html[data-theme="light"] .app-user-pill {
+    background: rgba(255, 255, 255, 0.64);
+    border-color: var(--theme-border);
+}
+
+html[data-theme="light"] .row:hover td {
+    background: var(--theme-row-hover);
+}
+
+html[data-theme="light"] .modal-overlay {
+    background: var(--theme-overlay);
+}
+
+html[data-theme="light"] .status-pill {
+    color: var(--theme-strong);
+    border-color: var(--theme-border);
+}
+
+html[data-theme="light"] .status-ok,
+html[data-theme="light"] .kpi-ok {
+    color: #087867;
+}
+
+html[data-theme="light"] .status-warn,
+html[data-theme="light"] .kpi-warn {
+    color: #9b6200;
+}
+
+html[data-theme="light"] .status-fail,
+html[data-theme="light"] .kpi-fail {
+    color: #ba2740;
+}
+
+html[data-theme="light"] .status-ok {
+    background: rgba(0, 150, 125, 0.10);
+    border-color: rgba(0, 150, 125, 0.20);
+}
+
+html[data-theme="light"] .status-warn {
+    background: rgba(210, 140, 0, 0.12);
+    border-color: rgba(210, 140, 0, 0.24);
+}
+
+html[data-theme="light"] .status-fail {
+    background: rgba(196, 44, 64, 0.10);
+    border-color: rgba(196, 44, 64, 0.22);
+}

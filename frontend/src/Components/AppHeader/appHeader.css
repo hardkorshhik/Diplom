@@ -83,6 +83,10 @@
     border-color: rgba(70, 120, 255, 0.70);
 }
 
+.theme-toggle {
+    min-width: 112px;
+}
+
 .app-filter {
     display: flex;
     align-items: center;

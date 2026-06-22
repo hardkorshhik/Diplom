@@ -6,4 +6,5 @@ import ru.diplom.labquality.domain.MeasurementEntity
 interface MeasurementRepo : JpaRepository<MeasurementEntity, Long> {
     fun findAllByBatchId(batchId: Long): List<MeasurementEntity>
     fun findAllByBatchIdOrderByMeasuredAtDesc(batchId: Long): List<MeasurementEntity>
+    fun deleteAllByBatchId(batchId: Long)
 }

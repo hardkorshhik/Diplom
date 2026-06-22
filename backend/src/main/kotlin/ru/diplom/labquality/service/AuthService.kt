@@ -20,6 +20,7 @@ class AuthService(
 
         val user = userRepo.save(
             UserEntity(
+                fullName = normalized.substringBefore("@"),
                 email = normalized,
                 passwordHash = encoder.encode(password)!!,
                 role = Role.LAB
